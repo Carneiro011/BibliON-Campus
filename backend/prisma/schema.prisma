@@ -1,0 +1,189 @@
+// prisma/schema.prisma
+// BibliON Campus — Schema completo do banco de dados
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Role {
+  STUDENT
+  MODERATOR
+  ADMIN
+}
+
+enum ResourceType {
+  PDF
+  VIDEO
+  LINK
+  ARTICLE
+}
+
+enum ResourceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         Role     @default(STUDENT)
+  avatarUrl    String?  @map("avatar_url")
+  institution  String?
+  bio          String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relações
+  resources    Resource[]
+  ratings      Rating[]
+  comments     Comment[]
+  refreshTokens RefreshToken[]
+  moderations  Moderation[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Resource {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  type        ResourceType
+  url         String         // URL do arquivo (Firebase) ou link externo
+  fileSize    Int?           @map("file_size") // em bytes, para PDFs
+  summary     String?        // Gerado pela IA
+  status      ResourceStatus @default(PENDING)
+  viewCount   Int            @default(0) @map("view_count")
+  userId      String         @map("user_id")
+  disciplineId String?       @map("discipline_id")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Relações
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  discipline  Discipline?    @relation(fields: [disciplineId], references: [id])
+  tags        ResourceTag[]
+  ratings     Rating[]
+  comments    Comment[]
+  moderation  Moderation?
+
+  // Índices para busca performática
+  @@index([status])
+  @@index([type])
+  @@index([userId])
+  @@index([disciplineId])
+  @@index([createdAt(sort: Desc)])
+  @@map("resources")
+}
+
+model Discipline {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  color       String     @default("#6366f1") // Cor para UI
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  resources   Resource[]
+
+  @@map("disciplines")
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  slug      String        @unique
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  resources ResourceTag[]
+
+  @@map("tags")
+}
+
+model ResourceTag {
+  resourceId String @map("resource_id")
+  tagId      String @map("tag_id")
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([resourceId, tagId])
+  @@map("resource_tags")
+}
+
+model Rating {
+  id         String   @id @default(cuid())
+  stars      Int      // 1 a 5
+  userId     String   @map("user_id")
+  resourceId String   @map("resource_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceId]) // Um usuário, uma avaliação por recurso
+  @@map("ratings")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  body       String
+  userId     String   @map("user_id")
+  resourceId String   @map("resource_id")
+  parentId   String?  @map("parent_id") // Para respostas aninhadas
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource Resource  @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([resourceId])
+  @@map("comments")
+}
+
+model Moderation {
+  id           String         @id @default(cuid())
+  resourceId   String         @unique @map("resource_id")
+  moderatorId  String?        @map("moderator_id")
+  status       ResourceStatus @default(PENDING)
+  reason       String?        // Motivo da rejeição
+  aiFlags      String[]       @map("ai_flags") // Flags da moderação IA
+  reviewedAt   DateTime?      @map("reviewed_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  resource  Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  moderator User?    @relation(fields: [moderatorId], references: [id])
+
+  @@map("moderations")
+}
