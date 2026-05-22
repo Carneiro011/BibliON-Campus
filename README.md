@@ -159,7 +159,3 @@ cd backend
 npm run test          # Unit tests
 npm run test:cov      # Com cobertura
 ```
-
-## 📄 Licença
-
-MIT — Projeto acadêmico de livre uso.
