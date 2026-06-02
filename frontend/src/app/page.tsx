@@ -91,7 +91,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-gray-100 py-8">
         <div className="container-app flex items-center justify-between text-sm text-gray-400">
-          <span>© 2026 BibliON Campus. Projeto acadêmico. IFCE=TIANGUÁ </span>
+          <span>© 2026 BibliON Campus. Projeto acadêmico. IFCE-TIANGUÁ </span>
           <div className="flex gap-6">
             <Link href="/docs" className="hover:text-gray-600">Documentação</Link>
             <Link href="/api/docs" className="hover:text-gray-600">API</Link>
