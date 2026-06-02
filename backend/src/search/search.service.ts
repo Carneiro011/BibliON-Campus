@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { ResourceStatus } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 
 export interface SearchParams {
   q: string
@@ -29,6 +30,14 @@ export class SearchService {
     const safeQuery = q.trim().replace(/[^a-zA-Z0-9\u00C0-\u024F\s]/g, '').trim()
 
     if (!safeQuery) return { data: [], meta: { page, limit, total: 0 } }
+
+    // Cláusulas condicionais com Prisma.sql / Prisma.empty (correto para queryRaw aninhado)
+    const typeClause = type
+      ? Prisma.sql`AND r.type = ${type}`
+      : Prisma.empty
+    const disciplineClause = disciplineId
+      ? Prisma.sql`AND r.discipline_id = ${disciplineId}`
+      : Prisma.empty
 
     // Full-text search com ranking por relevância usando Prisma $queryRaw
     const results = await this.prisma.$queryRaw<any[]>`
@@ -65,8 +74,8 @@ export class SearchService {
           @@ plainto_tsquery('portuguese', ${safeQuery})
           OR r.title ILIKE ${'%' + safeQuery + '%'}
         )
-        ${type ? this.prisma.$queryRaw`AND r.type = ${type}` : this.prisma.$queryRaw``}
-        ${disciplineId ? this.prisma.$queryRaw`AND r.discipline_id = ${disciplineId}` : this.prisma.$queryRaw``}
+        ${typeClause}
+        ${disciplineClause}
       GROUP BY r.id, u.name, u.avatar_url, d.name, d.color
       ORDER BY rank DESC, r.view_count DESC
       LIMIT ${limit}

@@ -25,64 +25,30 @@ export class ResourcesService {
     dto: CreateResourceDto,
     file?: Express.Multer.File,
   ) {
+    // Validação: PDF exige arquivo; outros tipos exigem URL
+    if (dto.type === ResourceType.PDF && !file) {
+      throw new BadRequestException('Recursos do tipo PDF exigem o envio de um arquivo')
+    }
+    if (dto.type !== ResourceType.PDF && !dto.url) {
+      throw new BadRequestException('Recursos de link/vídeo/artigo exigem uma URL')
+    }
+    if (file && dto.type !== ResourceType.PDF) {
+      throw new BadRequestException('Arquivo só é aceito para recursos do tipo PDF')
+    }
+
     let url = dto.url || ''
     let fileSize: number | undefined
     let aiSummary: string | undefined
     let aiTags: string[] = []
+    let fileBuffer: Buffer | undefined
 
     if (file) {
-      if (dto.type !== ResourceType.PDF) {
-        throw new BadRequestException('Arquivo só é aceito para recursos do tipo PDF')
-      }
       const uploadResult = await this.storage.uploadPdf(file, userId)
       url = uploadResult.url
       fileSize = file.size
-
-      const tagIds = await this.resolveTagIds(dto.tags || [])
-
-      const resource = await this.prisma.resource.create({
-        data: {
-          title: dto.title,
-          description: dto.description,
-          type: dto.type,
-          url,
-          fileSize,
-          summary: dto.summary,
-          userId,
-          disciplineId: dto.disciplineId,
-          status: ResourceStatus.PENDING,
-          tags: { create: tagIds.map(tagId => ({ tagId })) },
-        },
-        include: {
-          user: { select: { id: true, name: true, avatarUrl: true } },
-          discipline: true,
-          tags: { include: { tag: true } },
-        },
-      })
-
-      await this.prisma.moderation.create({
-        data: { resourceId: resource.id, status: ResourceStatus.PENDING },
-      })
-
-      const resourceId = resource.id
-      const fileBuffer = file.buffer
-      const title = dto.title
-
-      this.ai
-        .analyzeResource({ type: 'pdf', buffer: fileBuffer, title })
-        .then(async (result: AiAnalysisResult) => {
-          if (result.summary) {
-            await this.prisma.resource.update({
-              where: { id: resourceId },
-              data: { summary: result.summary },
-            })
-          }
-        })
-        .catch(() => { /* Falha silenciosa */ })
-
-      return resource
-
-    } else if (dto.url && dto.type !== ResourceType.PDF) {
+      fileBuffer = file.buffer
+    } else if (dto.url) {
+      // Análise IA assíncrona para links (não bloqueia a criação)
       const result = await this.ai.analyzeResource({
         type: 'link',
         url: dto.url,
@@ -122,6 +88,23 @@ export class ResourcesService {
     await this.prisma.moderation.create({
       data: { resourceId: resource.id, status: ResourceStatus.PENDING },
     })
+
+    // Análise IA do PDF em background (não bloqueia a resposta)
+    if (fileBuffer) {
+      const resourceId = resource.id
+      const title = dto.title
+      this.ai
+        .analyzeResource({ type: 'pdf', buffer: fileBuffer, title })
+        .then(async (result: AiAnalysisResult) => {
+          if (result.summary) {
+            await this.prisma.resource.update({
+              where: { id: resourceId },
+              data: { summary: result.summary },
+            })
+          }
+        })
+        .catch(() => { /* Falha silenciosa */ })
+    }
 
     return resource
   }

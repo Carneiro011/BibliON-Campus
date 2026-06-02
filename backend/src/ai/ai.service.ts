@@ -20,12 +20,15 @@ interface AnalyzeInput {
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name)
-  private groq: Groq
+  private groq: Groq | null = null
 
   constructor(private config: ConfigService) {
-    this.groq = new Groq({
-      apiKey: config.get('GROQ_API_KEY'),
-    })
+    const apiKey = config.get('GROQ_API_KEY')
+    if (apiKey) {
+      this.groq = new Groq({ apiKey })
+    } else {
+      this.logger.warn('GROQ_API_KEY não definida — IA desativada')
+    }
   }
 
   async analyzeResource(input: AnalyzeInput): Promise<AiAnalysisResult> {
@@ -112,6 +115,7 @@ Responda APENAS com o JSON.`
   }
 
   private async callGroq(prompt: string): Promise<string> {
+    if (!this.groq) return '{}'
     const completion = await this.groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],

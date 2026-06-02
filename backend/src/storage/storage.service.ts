@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { v4 as uuidv4 } from 'uuid'
-import * as ws from 'ws'
 
 @Injectable()
 export class StorageService {
@@ -14,12 +13,6 @@ export class StorageService {
     this.supabase = createClient(
       config.get('SUPABASE_URL')!,
       config.get('SUPABASE_SERVICE_KEY')!,
-      {
-        realtime: {
-          // @ts-ignore - ws é compatível mas o tipo não é perfeito
-          transport: ws,
-        },
-      },
     )
     this.logger.log('Supabase Storage inicializado')
   }

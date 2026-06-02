@@ -1,6 +1,6 @@
 'use client'
 // src/hooks/useResources.ts
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '@/lib/api'
 import type { Resource, PaginatedResponse } from '@/types'
 
@@ -17,11 +17,18 @@ export function useResources(params: UseResourcesParams = {}) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Serializar params para comparação estável
+  const paramsKey = JSON.stringify(params)
+  const paramsRef = useRef(params)
+  paramsRef.current = params
+
   const fetch = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const { data: res } = await api.get<PaginatedResponse<Resource>>('/resources', { params })
+      const { data: res } = await api.get<PaginatedResponse<Resource>>('/resources', {
+        params: paramsRef.current,
+      })
       setData(res.data)
       setMeta(res.meta)
     } catch (e: any) {
@@ -29,7 +36,7 @@ export function useResources(params: UseResourcesParams = {}) {
     } finally {
       setLoading(false)
     }
-  }, [JSON.stringify(params)])
+  }, [paramsKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -54,6 +61,7 @@ export function useSearch(query: string, filters: { type?: string; disciplineId?
   const [data, setData] = useState<Resource[]>([])
   const [meta, setMeta] = useState({ total: 0, pages: 0, query: '' })
   const [loading, setLoading] = useState(false)
+  const filtersKey = JSON.stringify(filters)
 
   useEffect(() => {
     if (!query.trim()) { setData([]); return }
@@ -64,7 +72,7 @@ export function useSearch(query: string, filters: { type?: string; disciplineId?
       .catch(() => {})
       .finally(() => setLoading(false))
     return () => controller.abort()
-  }, [query, JSON.stringify(filters)])
+  }, [query, filtersKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { data, meta, loading }
 }

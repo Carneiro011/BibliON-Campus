@@ -84,7 +84,7 @@ export default function NewResourcePage() {
     if (data.disciplineId) fd.append('disciplineId', data.disciplineId)
     if (data.summary) fd.append('summary', data.summary)
     if (data.url && data.type !== 'PDF') fd.append('url', data.url)
-    tags.forEach(t => fd.append('tags[]', t))
+    tags.forEach(t => fd.append('tags', t))
     if (file && data.type === 'PDF') fd.append('file', file)
 
     try {
