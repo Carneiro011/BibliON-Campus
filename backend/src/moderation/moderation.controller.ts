@@ -23,8 +23,8 @@ export class ModerationController {
   @Get('pending')
   @Roles(Role.MODERATOR, Role.ADMIN)
   @ApiOperation({ summary: 'Listar recursos aguardando moderação' })
-  getPending(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.moderationService.getPending(page, limit)
+  getPending(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.moderationService.getPending(Number(page) || 1, Number(limit) || 20)
   }
 
   @Get('stats')

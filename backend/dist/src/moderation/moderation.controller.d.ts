@@ -5,7 +5,7 @@ declare class RejectDto {
 export declare class ModerationController {
     private moderationService;
     constructor(moderationService: ModerationService);
-    getPending(page?: number, limit?: number): Promise<{
+    getPending(page?: string, limit?: string): Promise<{
         data: ({
             user: {
                 id: string;

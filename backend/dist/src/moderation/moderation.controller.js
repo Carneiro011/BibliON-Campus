@@ -33,7 +33,7 @@ let ModerationController = class ModerationController {
         this.moderationService = moderationService;
     }
     getPending(page, limit) {
-        return this.moderationService.getPending(page, limit);
+        return this.moderationService.getPending(Number(page) || 1, Number(limit) || 20);
     }
     getStats() {
         return this.moderationService.getStats();
@@ -56,7 +56,7 @@ __decorate([
     __param(0, (0, common_1.Query)('page')),
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], ModerationController.prototype, "getPending", null);
 __decorate([
