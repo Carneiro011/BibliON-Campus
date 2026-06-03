@@ -5,7 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   BookOpen, Home, Search, Upload, Star,
-  Shield, User, LogOut, Menu, X, BarChart3,
+  Shield, User, LogOut, Menu, BarChart3,
+  Users, Crown,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -21,6 +22,7 @@ const navItems = [
 const adminItems = [
   { href: '/dashboard/admin/moderation', label: 'Moderação', icon: Shield },
   { href: '/dashboard/admin/stats', label: 'Estatísticas', icon: BarChart3 },
+  { href: '/dashboard/admin/users', label: 'Usuários', icon: Users },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -38,6 +40,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
     </div>
   )
+
+  const isAdmin = user.role === 'ADMIN'
 
   const Sidebar = ({ mobile = false }) => (
     <aside className={cn(
@@ -76,22 +80,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <>
             <div className="my-4 border-t border-gray-100" />
             <p className="section-label px-3 mb-3">Administração</p>
-            {adminItems.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  pathname.startsWith(href)
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            ))}
+            {adminItems.map(({ href, label, icon: Icon }) => {
+              // Usuários só aparece para ADMIN
+              if (href === '/dashboard/admin/users' && !isAdmin) return null
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    pathname.startsWith(href)
+                      ? 'bg-brand-50 text-brand-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                  {href === '/dashboard/admin/users' && (
+                    <Crown className="h-3 w-3 text-purple-500 ml-auto" />
+                  )}
+                </Link>
+              )
+            })}
           </>
         )}
       </nav>
@@ -104,7 +115,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
-            <p className="truncate text-xs text-gray-400">{user.email}</p>
+            <p className="truncate text-xs text-gray-400">{user.role === 'ADMIN' ? '👑 Admin' : user.role === 'MODERATOR' ? '🛡 Moderador' : user.email}</p>
           </div>
         </div>
         <div className="space-y-1">
@@ -121,10 +132,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Sidebar desktop */}
       <Sidebar />
 
-      {/* Sidebar mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
@@ -134,9 +143,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
 
-      {/* Main */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Topbar mobile */}
         <header className="flex h-16 items-center gap-4 border-b border-gray-100 bg-white px-4 lg:hidden">
           <button onClick={() => setSidebarOpen(true)} className="btn-ghost p-2">
             <Menu className="h-5 w-5" />
@@ -144,7 +151,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <span className="font-semibold text-gray-900">BibliON Campus</span>
         </header>
 
-        {/* Conteúdo */}
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
