@@ -9,7 +9,11 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.setGlobalPrefix('api/v1');
     app.enableCors({
-        origin: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        origin: [
+            'http://localhost:3000',
+            'https://bibli-on-campus.vercel.app',
+            /\.vercel\.app$/,
+        ],
         credentials: true,
     });
     app.useGlobalPipes(new common_1.ValidationPipe({

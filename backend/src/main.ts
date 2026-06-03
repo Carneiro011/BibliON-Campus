@@ -11,9 +11,13 @@ async function bootstrap() {
   // Prefixo global da API
   app.setGlobalPrefix('api/v1')
 
-  // CORS
+  // CORS — aceita localhost e qualquer domínio vercel.app
   app.enableCors({
-    origin: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'https://bibli-on-campus.vercel.app',
+      /\.vercel\.app$/,
+    ],
     credentials: true,
   })
 
