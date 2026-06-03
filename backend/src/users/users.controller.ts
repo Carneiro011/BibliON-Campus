@@ -43,8 +43,8 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: '[Admin] Listar todos os usuários' })
-  listAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.usersService.listAll(page, limit)
+  listAll(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.usersService.listAll(Number(page) || 1, Number(limit) || 20)
   }
 
   @Patch(':id/toggle-active')
@@ -53,5 +53,13 @@ export class UsersController {
   @ApiOperation({ summary: '[Admin] Ativar/desativar usuário' })
   toggleActive(@Param('id') id: string, @Body('isActive') isActive: boolean) {
     return this.usersService.setActive(id, isActive)
+  }
+
+  @Patch(':id/role')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: '[Admin] Promover/rebaixar papel do usuário' })
+  changeRole(@Param('id') id: string, @Body('role') role: Role) {
+    return this.usersService.changeRole(id, role)
   }
 }

@@ -72,6 +72,16 @@ let UsersService = class UsersService {
             select: { id: true, name: true, isActive: true },
         });
     }
+    async changeRole(id, role) {
+        if (!Object.values(client_1.Role).includes(role)) {
+            throw new Error(`Role inválida: ${role}`);
+        }
+        return this.prisma.user.update({
+            where: { id },
+            data: { role },
+            select: { id: true, name: true, email: true, role: true },
+        });
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

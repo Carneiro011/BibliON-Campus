@@ -1,3 +1,4 @@
+import { Role } from '@prisma/client';
 import { UsersService } from './users.service';
 export declare class UsersController {
     private usersService;
@@ -74,7 +75,7 @@ export declare class UsersController {
             comments: number;
         };
     }>;
-    listAll(page?: number, limit?: number): Promise<{
+    listAll(page?: string, limit?: string): Promise<{
         data: {
             id: string;
             name: string;
@@ -97,5 +98,11 @@ export declare class UsersController {
         id: string;
         name: string;
         isActive: boolean;
+    }>;
+    changeRole(id: string, role: Role): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: import(".prisma/client").$Enums.Role;
     }>;
 }

@@ -88,4 +88,10 @@ export declare class UsersService {
         name: string;
         isActive: boolean;
     }>;
+    changeRole(id: string, role: Role): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: import(".prisma/client").$Enums.Role;
+    }>;
 }

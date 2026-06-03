@@ -38,10 +38,13 @@ let UsersController = class UsersController {
         return this.usersService.getProfile(id);
     }
     listAll(page, limit) {
-        return this.usersService.listAll(page, limit);
+        return this.usersService.listAll(Number(page) || 1, Number(limit) || 20);
     }
     toggleActive(id, isActive) {
         return this.usersService.setActive(id, isActive);
+    }
+    changeRole(id, role) {
+        return this.usersService.changeRole(id, role);
     }
 };
 exports.UsersController = UsersController;
@@ -86,7 +89,7 @@ __decorate([
     __param(0, (0, common_1.Query)('page')),
     __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "listAll", null);
 __decorate([
@@ -100,6 +103,17 @@ __decorate([
     __metadata("design:paramtypes", [String, Boolean]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "toggleActive", null);
+__decorate([
+    (0, common_1.Patch)(':id/role'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Promover/rebaixar papel do usuário' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('role')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "changeRole", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('users'),
     (0, common_1.Controller)('users'),
